@@ -20,7 +20,7 @@ var (
 
 
 func openForRead(name string) *os.File {
-    file, error := os.Open(name, os.O_RDONLY, 0777)
+    file, error := os.Open(name, os.O_RDONLY, 0444)
     if error != nil {
         panic(error)
     }
