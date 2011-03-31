@@ -7,75 +7,16 @@ import (
     "os"
 )
 
+import (
+    "algorithms/rle"
+)
+
 var (
     fCreate = flag.Bool("c", false, "create archive")
     fExtract = flag.Bool("x", false, "extract files from archive")
     fMethod = flag.String("m", "rle", "compression method")
     fName = flag.String("f", "", "archive file name")
 )
-
-
-func RLECompress(in *bufio.Reader, out *bufio.Writer) {
-    var (
-        curr, prev, count byte = 0, 0, 0
-        found bool = false
-        error os.Error = nil
-    )
-    for {
-        curr, error = in.ReadByte()
-        if error != nil {
-            break
-        }
-        if found {
-            if curr == prev && count < 255 {
-                count++
-            } else {
-                out.WriteByte(count)
-                out.WriteByte(curr)
-                count = 0
-                found = false
-            }
-        } else {
-            out.WriteByte(curr)
-            found = curr == prev
-        }
-        prev = curr
-    }
-    if count > 0 {
-        out.WriteByte(count)
-    }
-}
-
-
-func RLEUncompress(in *bufio.Reader, out *bufio.Writer) {
-    var (
-        curr, prev byte = 0, 0
-        found, invalid_prev bool = false, false
-        error os.Error = nil
-    )
-    for error != os.EOF {
-        curr, error = in.ReadByte()
-        if error != nil {
-            if found {
-                panic("Archive corrupted")
-            }
-            break
-        }
-        if found {
-            for ; curr > 0; curr-- {
-                out.WriteByte(prev)
-            }
-            prev = 0
-            found = false
-            invalid_prev = true
-        } else {
-            out.WriteByte(curr)
-            found = curr == prev && !invalid_prev
-            prev = curr
-            invalid_prev = false
-        }
-    }
-}
 
 
 func openForRead(name string) *os.File {
@@ -130,7 +71,7 @@ func main() {
             fobj := openForRead(arg)
             defer fobj.Close()
             fin := bufio.NewReader(fobj)
-            RLECompress(fin, fout)
+            rle.Compress(fin, fout)
         }
     } else {
         archive := openForRead(*fName)
@@ -142,6 +83,6 @@ func main() {
             archive.Close()
             result.Close()
         }()
-        RLEUncompress(fin, fout)
+        rle.Decompress(fin, fout)
     }
 }
