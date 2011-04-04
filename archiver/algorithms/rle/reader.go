@@ -11,7 +11,7 @@ func Decompress(in *bufio.Reader, out *bufio.Writer) {
         found, invalid_prev bool = false, false
         error os.Error = nil
     )
-    for error != os.EOF {
+    for {
         curr, error = in.ReadByte()
         if error != nil {
             if found {
