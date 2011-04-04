@@ -5,33 +5,35 @@ import (
     "os"
 )
 
-func Compress(in *bufio.Reader, out *bufio.Writer) {
+func Compress(fin *os.File, fout *os.File) {
     var (
         curr, prev, count byte = 0, 0, 0
         found bool = false
         error os.Error = nil
     )
+    reader := bufio.NewReader(fin)
+    writer := bufio.NewWriter(fout)
+    defer writer.Flush()
     for {
-        curr, error = in.ReadByte()
-        if error != nil {
+        if curr, error = reader.ReadByte(); error != nil {
             break
         }
         if found {
             if curr == prev && count < 255 {
                 count++
             } else {
-                out.WriteByte(count)
-                out.WriteByte(curr)
+                writer.WriteByte(count)
+                writer.WriteByte(curr)
                 count = 0
                 found = false
             }
         } else {
-            out.WriteByte(curr)
+            writer.WriteByte(curr)
             found = curr == prev
         }
         prev = curr
     }
     if count > 0 {
-        out.WriteByte(count)
+        writer.WriteByte(count)
     }
 }
