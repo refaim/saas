@@ -18,6 +18,8 @@ type (
         left, right *hfNode
     }
     hfHeap []*hfNode
+
+    hfCodeTable map[byte] hfCode
 )
 
 var (
@@ -55,7 +57,18 @@ func fillCodeTable(node *hfNode, len, code uint) {
 }
 
 
-func Compress(fin *os.File, fout *os.File) {
+func serializeMetaInfo(fin, fout *os.File) {
+    var dump hfDump
+    dump.Table = make([] hfCode, 256)
+    for k, v := range code_table {
+        dump.Table[k] = v
+    }
+    dump.FileSize = GetFileSize(fin)
+    PanicIf(gob.NewEncoder(fout).Encode(dump))
+}
+
+
+func Compress(fin, fout *os.File) {
     countFreq(fin)
 
     // create heap
@@ -72,14 +85,9 @@ func Compress(fin *os.File, fout *os.File) {
         heap.Push(tree, parent)
     }
 
-    // save code table
     fillCodeTable(tree[0], 0, 0)
-    PanicIf(gob.NewEncoder(fout).Encode(code_table))
 
-    // save source file size
-    fi, error := fin.Stat()
-    PanicIf(error)
-    PanicIf(gob.NewEncoder(fout).Encode(fi.Size))
+    serializeMetaInfo(fin, fout)
 
     // encode
     var (

@@ -8,3 +8,10 @@ func PanicIf(error os.Error) {
         panic(error)
     }
 }
+
+
+func GetFileSize(fobj *os.File) int64 {
+    fileinfo, error := fobj.Stat()
+    PanicIf(error)
+    return fileinfo.Size
+}

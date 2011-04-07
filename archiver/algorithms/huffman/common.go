@@ -4,5 +4,8 @@ type (
     hfCode struct {
         Code, Len uint
     }
-    hfCodeTable map[byte] hfCode
+    hfDump struct {
+        Table [] hfCode
+        FileSize int64
+    }
 )
