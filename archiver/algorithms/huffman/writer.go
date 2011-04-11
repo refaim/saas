@@ -73,9 +73,7 @@ func Compress(fin, fout *os.File) {
 
     // create heap
     for ch, freq := range freq_table {
-        if freq > 0 {
             tree.Push(&hfNode{char: ch, freq: freq})
-        }
     }
     heap.Init(tree)
     for len(tree) > 1 {
