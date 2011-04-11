@@ -51,11 +51,11 @@ func init() {
 }
 
 func main() {
-    /*defer func() {
+    defer func() {
         if error := recover(); error != nil {
             fmt.Printf("Error: %s", error)
         }
-    }()*/
+    }()
 
     flag.Parse()
     if !*fCreate && !*fExtract {
