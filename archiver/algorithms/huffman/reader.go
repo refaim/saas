@@ -24,12 +24,9 @@ func deserializeMetaInfo(fin *os.File) int64 {
         dump hfDump
     )
     PanicIf(gob.NewDecoder(fin).Decode(&dump))
-    for i := range dump.Table {
-        entry := &dump.Table[i]
-        if entry.Len != 0 {
-            codeptr := new(hfReverseCode)
-            *codeptr = hfReverseCode{char: byte(i), len: entry.Len}
-            rct[entry.Code] = codeptr
+    for i, record := range dump.Table {
+        if record.Len != 0 {
+            rct[record.Code] = &hfReverseCode{char: byte(i), len: record.Len}
         }
     }
     return dump.FileSize
