@@ -17,7 +17,9 @@ func Decompress(fin, fout *os.File) int64 {
         real_size, source_size, read_bytes int64 = 0, 0, 0
     )
 
+    before_gob := GetFilePos(fin)
     PanicIf(gob.NewDecoder(fin).Decode(&source_size))
+    read_bytes = GetFilePos(fin) - before_gob
 
     reader := bufio.NewReader(fin)
     writer := bufio.NewWriter(fout)

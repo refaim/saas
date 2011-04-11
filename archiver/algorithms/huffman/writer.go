@@ -19,17 +19,12 @@ type (
     }
     hfHeap []*hfNode
 
+    hfFreqTable map[byte] uint64
     hfCodeTable map[byte] hfCode
 )
 
-var (
-    freq_table map[byte] uint64 = make(map[byte] uint64, 255)
-    code_table hfCodeTable = make(hfCodeTable)
-    tree hfHeap
-)
 
-
-func countFreq(fobj *os.File) {
+func countFreq(table *hfFreqTable, fobj *os.File) {
     var (
         curr byte = 0
         error os.Error = nil
@@ -40,27 +35,27 @@ func countFreq(fobj *os.File) {
         if error != nil {
             break
         }
-        freq_table[curr]++
+        (*table)[curr]++
     }
     _, error = fobj.Seek(0, 0)
     PanicIf(error)
 }
 
 
-func fillCodeTable(node *hfNode, len, code uint) {
+func fillCodeTable(table *hfCodeTable, node *hfNode, len, code uint) {
     if node.left == nil && node.right == nil {
-        code_table[node.char] = hfCode{Len: len, Code: code}
+        (*table)[node.char] = hfCode{Len: len, Code: code}
     } else {
-        fillCodeTable(node.left,  len + 1, code)
-        fillCodeTable(node.right, len + 1, code | 1 << len)
+        fillCodeTable(table, node.left,  len + 1, code)
+        fillCodeTable(table, node.right, len + 1, code | 1 << len)
     }
 }
 
 
-func serializeMetaInfo(fin, fout *os.File) {
+func serializeMetaInfo(code_table *hfCodeTable, fin, fout *os.File) {
     var dump hfDump
     dump.Table = make([] hfCode, 256)
-    for k, v := range code_table {
+    for k, v := range (*code_table) {
         dump.Table[k] = v
     }
     dump.FileSize = GetFileSize(fin)
@@ -69,23 +64,28 @@ func serializeMetaInfo(fin, fout *os.File) {
 
 
 func Compress(fin, fout *os.File) {
-    countFreq(fin)
+    var (
+        freq_table hfFreqTable = make(hfFreqTable, 255)
+        code_table hfCodeTable = make(hfCodeTable)
+        tree hfHeap
+    )
+    countFreq(&freq_table, fin)
 
     // create heap
     for ch, freq := range freq_table {
             tree.Push(&hfNode{char: ch, freq: freq})
     }
-    heap.Init(tree)
+    heap.Init(&tree)
     for len(tree) > 1 {
-        l := heap.Pop(tree).(*hfNode)
-        r := heap.Pop(tree).(*hfNode)
+        l := heap.Pop(&tree).(*hfNode)
+        r := heap.Pop(&tree).(*hfNode)
         parent := &hfNode{freq: l.freq + r.freq, left: l, right: r}
-        heap.Push(tree, parent)
+        heap.Push(&tree, parent)
     }
 
-    fillCodeTable(tree[0], 0, 0)
+    fillCodeTable(&code_table, tree[0], 0, 0)
 
-    serializeMetaInfo(fin, fout)
+    serializeMetaInfo(&code_table, fin, fout)
 
     // encode
     var (

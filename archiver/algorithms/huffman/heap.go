@@ -1,31 +1,30 @@
 package huffman
 
 
-func (hfHeap) Len() int {
-    return len(tree)
+func (heap *hfHeap) Len() int {
+    return len(*heap)
 }
 
 
-func (hfHeap) Less(i, j int) bool {
-    return tree[i].freq < tree[j].freq
+func (heap *hfHeap) Less(i, j int) bool {
+    return (*heap)[i].freq < (*heap)[j].freq
 }
 
 
-func (hfHeap) Swap(i, j int) {
-    tree[i], tree[j] = tree[j], tree[i]
+func (heap *hfHeap) Swap(i, j int) {
+    (*heap)[i], (*heap)[j] = (*heap)[j], (*heap)[i]
 }
 
 
-func (hfHeap) Push(x interface{}) {
-    elm := x.(*hfNode)
-    tree = append(tree, elm)
+func (heap *hfHeap) Push(x interface{}) {
+    (*heap) = append((*heap), x.(*hfNode))
 }
 
 
-func (hfHeap) Pop() interface{} {
-    n := len(tree) - 1
-    elm := tree[n]
-    tree[n] = nil
-    tree = tree[0:n]
+func (heap *hfHeap) Pop() interface{} {
+    n := heap.Len() - 1
+    elm := (*heap)[n]
+    (*heap)[n] = nil
+    (*heap) = (*heap)[0:n]
     return elm
 }

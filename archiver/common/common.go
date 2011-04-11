@@ -15,3 +15,10 @@ func GetFileSize(fobj *os.File) int64 {
     PanicIf(error)
     return fileinfo.Size
 }
+
+
+func GetFilePos(fobj *os.File) int64 {
+    pos, error := fobj.Seek(0, 1)
+    PanicIf(error)
+    return pos
+}
