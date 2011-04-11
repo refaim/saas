@@ -29,7 +29,7 @@ func Decompress(fin, fout *os.File) int64 {
             if found {
                 panic("Archive corrupted")
             }
-            break
+            panic(error)
         }
         read_bytes++
         if found {

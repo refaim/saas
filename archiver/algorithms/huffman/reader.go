@@ -49,7 +49,10 @@ func Decompress(fin, fout *os.File) int64 {
     for real_size < source_size {
         curr, error := reader.ReadByte()
         if error != nil {
-            break
+            if error == os.EOF {
+                panic("Archive corrupted")
+            }
+            panic(error)
         }
         read_bytes++
         i = 0
