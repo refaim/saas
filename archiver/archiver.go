@@ -3,6 +3,7 @@ package main
 import (
     "flag"
     "fmt"
+    "gob"
     "os"
 )
 
@@ -12,7 +13,10 @@ import (
     "algorithms/huffman"
 )
 
-type mmap map[string] func(*os.File, *os.File)
+type (
+    cmap map[string] func(*os.File, *os.File)
+    dcmap map[string] func(*os.File, *os.File) int64
+)
 
 var (
     fCreate = flag.Bool("c", false, "create archive")
@@ -20,7 +24,8 @@ var (
     fMethod = flag.String("m", "rle", "compression method")
     fName = flag.String("f", "", "archive file name")
 
-    COMPRESSION_METHODS mmap = make(mmap)
+    COMPRESSORS cmap = make(cmap)
+    DECOMPRESSORS dcmap = make(dcmap)
 )
 
 
@@ -38,17 +43,19 @@ func openForWrite(name string) *os.File {
 }
 
 
+func init() {
+      COMPRESSORS["rle.compress"] = rle.Compress
+    DECOMPRESSORS["rle.decompress"] = rle.Decompress
+      COMPRESSORS["huffman.compress"] = huffman.Compress
+    DECOMPRESSORS["huffman.decompress"] = huffman.Decompress
+}
+
 func main() {
-    defer func() {
+    /*defer func() {
         if error := recover(); error != nil {
             fmt.Printf("Error: %s", error)
         }
-    }()
-
-    COMPRESSION_METHODS["rle.compress"] = rle.Compress
-    COMPRESSION_METHODS["rle.decompress"] = rle.Decompress
-    COMPRESSION_METHODS["huffman.compress"] = huffman.Compress
-    COMPRESSION_METHODS["huffman.decompress"] = huffman.Decompress
+    }()*/
 
     flag.Parse()
     if !*fCreate && !*fExtract {
@@ -61,8 +68,8 @@ func main() {
         panic("Missing archive file name")
     }
 
-    compress := COMPRESSION_METHODS[*fMethod + ".compress"]
-    decompress := COMPRESSION_METHODS[*fMethod + ".decompress"]
+    compress := COMPRESSORS[*fMethod + ".compress"]
+    decompress := DECOMPRESSORS[*fMethod + ".decompress"]
     if compress == nil || decompress == nil {
         panic("Unknown compression method")
     }
@@ -74,16 +81,33 @@ func main() {
 
         archive := openForWrite(*fName)
         defer archive.Close()
+
+        PanicIf(gob.NewEncoder(archive).Encode(flag.Args()))
         for _, arg := range flag.Args() {
             fobj := openForRead(arg)
             compress(fobj, archive)
             fobj.Close()
         }
     } else {
+        dir := *fName + ".ex"
+        PanicIf(os.MkdirAll(dir, 0666))
+
         archive := openForRead(*fName)
-        result := openForWrite(*fName + ".ex")
-        decompress(archive, result)
-        archive.Close()
-        result.Close()
+        defer archive.Close()
+
+        var filenames []string = make([]string, 0)
+        PanicIf(gob.NewDecoder(archive).Decode(&filenames))
+        for _, arg := range filenames {
+            file_begin_pos, error := archive.Seek(0, 1)
+            PanicIf(error)
+
+            result := openForWrite(fmt.Sprintf("%s/%s", dir, arg))
+            bytes_read := decompress(archive, result)
+            result.Close()
+
+            // workaround for buffered reader
+            _, error = archive.Seek(file_begin_pos + bytes_read, 0)
+            PanicIf(error)
+        }
     }
 }

@@ -2,18 +2,26 @@ package rle
 
 import (
     "bufio"
+    "gob"
     "os"
 )
 
-func Compress(fin *os.File, fout *os.File) {
+import . "common"
+
+
+func Compress(fin, fout *os.File) {
     var (
         curr, prev, count byte = 0, 0, 0
         found bool = false
         error os.Error = nil
     )
+
+    PanicIf(gob.NewEncoder(fout).Encode(GetFileSize(fin)))
+
     reader := bufio.NewReader(fin)
     writer := bufio.NewWriter(fout)
     defer writer.Flush()
+
     for {
         if curr, error = reader.ReadByte(); error != nil {
             break
