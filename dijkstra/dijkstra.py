@@ -21,7 +21,17 @@ CHAR2FUNC = {
     '-': lambda a, b: a - b,
 }
 
-TOKEN_RE = re.compile(r'(\s*(\d+\.\d+|\d+|\*\*|[/*+-]))')
+TOKEN_RE = re.compile(
+    '''
+    (\s*(
+         \d+\.\d+ |
+         \d+      |
+         \*\*     |
+         [/*+-]   |
+         \(       |
+         \)
+        )
+    )''', re.VERBOSE)
 
 class DError(Exception): pass
 
@@ -69,6 +79,7 @@ def main(argv):
 
     stack, postfix = [], []
     for token in tokens(expression):
+
         if isop(token):
             while (stack and isop(stack[-1]) and
                    (isleft(token) and priority(token) <= priority(stack[-1]) or
@@ -76,9 +87,25 @@ def main(argv):
             ):
                 postfix.append(stack.pop())
             stack.append(token)
-        else:
+
+        elif token == '(':
+            stack.append(token)
+
+        elif token == ')':
+            while stack[-1] != '(':
+                postfix.append(stack.pop())
+                if not stack:
+                    raise DError('parentheses mismatch')
+            stack.pop()
+
+        else: # number
             postfix.append(float(token))
-    postfix.extend(reversed(stack))
+
+    while stack:
+        operator = stack.pop()
+        if operator == '(':
+            raise DError('parentheses mismatch')
+        postfix.append(operator)
 
     result = calculate(postfix)
     print result
