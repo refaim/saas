@@ -50,12 +50,6 @@ def calculate(postfix):
     return result[0]
 
 
-def make_number(string):
-    if string.isdigit():
-        return int(string)
-    return float(string)
-
-
 def isop(token):
     return token in OPERATOR_PRIORITIES
 
@@ -66,6 +60,7 @@ def priority(operator):
 
 def main(argv):
     expression = (' '.join(argv) if argv else raw_input()).strip()
+
     operators, postfix = [], []
     for token in tokens(expression):
         if isop(token):
@@ -75,13 +70,11 @@ def main(argv):
                 postfix.append(operators.pop())
             operators.append(token)
         else:
-            postfix.append(make_number(token))
+            postfix.append(float(token))
     postfix.extend(reversed(operators))
+
     result = calculate(postfix)
-    correct = eval(expression.replace('^', '**'))
     print result
-    if result != correct:
-        print 'correct: {0}'.format(correct)
 
 
 if __name__ == '__main__':
