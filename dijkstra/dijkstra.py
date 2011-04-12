@@ -5,20 +5,27 @@ import os
 import re
 
 
+UNARY_OPERATORS = {
+    '+': 'p',
+    '-': 'm',
+}
+RESTORE_UNARY = dict(zip(UNARY_OPERATORS.itervalues(), UNARY_OPERATORS.iterkeys()))
+
 OPERATOR_PRIORITIES = {
+    'm':  (3, 'r'),
     '**': (2, 'r'),
-    '*': (1, 'l'),
-    '/': (1, 'l'),
-    '+': (0, 'l'),
-    '-': (0, 'l'),
+    '*':  (1, 'l'),
+    '/':  (1, 'l'),
+    '+':  (0, 'l'),
+    '-':  (0, 'l'),
 }
 
 CHAR2FUNC = {
     '**': lambda a, b: a ** b,
-    '*': lambda a, b: a * b,
-    '/': lambda a, b: a / b,
-    '+': lambda a, b: a + b,
-    '-': lambda a, b: a - b,
+    '*':  lambda a, b: a * b,
+    '/':  lambda a, b: a / b,
+    '+':  lambda a, b: a + b,
+    '-':  lambda a, b: a - b,
 }
 
 TOKEN_RE = re.compile(
@@ -78,9 +85,16 @@ def main(argv):
     expression = (' '.join(argv) if argv else raw_input()).strip()
 
     stack, postfix = [], []
+    prev = '+' # dummy operator, only for first iteration
     for token in tokens(expression):
 
         if isop(token):
+            if isop(prev) and token in UNARY_OPERATORS:
+                if token == '+':
+                    continue
+                postfix.append(0)
+                token = UNARY_OPERATORS[token]
+
             while (stack and isop(stack[-1]) and
                    (isleft(token) and priority(token) <= priority(stack[-1]) or
                     not isleft(token) and priority(token) < priority(stack[-1]))
@@ -98,8 +112,10 @@ def main(argv):
                     raise DError('parentheses mismatch')
             stack.pop()
 
-        else: # number
+        else:
             postfix.append(float(token))
+
+        prev = token
 
     while stack:
         operator = stack.pop()
@@ -107,7 +123,7 @@ def main(argv):
             raise DError('parentheses mismatch')
         postfix.append(operator)
 
-    result = calculate(postfix)
+    result = calculate(map(lambda x: RESTORE_UNARY.get(x, x), postfix))
     print int(result) if result.is_integer() else result
 
 
