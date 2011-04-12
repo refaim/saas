@@ -83,6 +83,8 @@ def isleft(operator):
 
 def main(argv):
     expression = (' '.join(argv) if argv else raw_input()).strip()
+    if not expression:
+        return 0
 
     stack, postfix = [], []
     prev = '+' # dummy operator, only for first iteration
@@ -125,6 +127,7 @@ def main(argv):
 
     result = calculate(map(lambda x: RESTORE_UNARY.get(x, x), postfix))
     print int(result) if result.is_integer() else result
+    return 0
 
 
 if __name__ == '__main__':
