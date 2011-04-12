@@ -108,7 +108,7 @@ def main(argv):
         postfix.append(operator)
 
     result = calculate(postfix)
-    print result
+    print int(result) if result.is_integer() else result
 
 
 if __name__ == '__main__':
