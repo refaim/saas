@@ -6,20 +6,22 @@ import re
 
 
 OPERATOR_PRIORITIES = {
-    '*': 1,
-    '/': 1,
-    '+': 0,
-    '-': 0,
+    '**': (2, 'r'),
+    '*': (1, 'l'),
+    '/': (1, 'l'),
+    '+': (0, 'l'),
+    '-': (0, 'l'),
 }
 
 CHAR2FUNC = {
+    '**': lambda a, b: a ** b,
     '*': lambda a, b: a * b,
     '/': lambda a, b: a / b,
     '+': lambda a, b: a + b,
     '-': lambda a, b: a - b,
 }
 
-TOKEN_RE = re.compile(r'(\s*(\d+\.\d+|\d+|\+|-|\*|\\|\^))')
+TOKEN_RE = re.compile(r'(\s*(\d+\.\d+|\d+|\*\*|[/*+-]))')
 
 class DError(Exception): pass
 
@@ -58,6 +60,10 @@ def priority(operator):
     return OPERATOR_PRIORITIES[operator][0]
 
 
+def isleft(operator):
+    return OPERATOR_PRIORITIES[operator][1] == 'l'
+
+
 def main(argv):
     expression = (' '.join(argv) if argv else raw_input()).strip()
 
@@ -65,7 +71,8 @@ def main(argv):
     for token in tokens(expression):
         if isop(token):
             while (operators and isop(operators[-1]) and
-                   priority(token) <= priority(operators[-1])
+                   (isleft(token) and priority(token) <= priority(operators[-1]) or
+                    not isleft(token) and priority(token) < priority(operators[-1]))
             ):
                 postfix.append(operators.pop())
             operators.append(token)
