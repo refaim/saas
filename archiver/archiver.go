@@ -68,12 +68,6 @@ func main() {
         panic("Missing archive file name")
     }
 
-    compress := COMPRESSORS[*fMethod + ".compress"]
-    decompress := DECOMPRESSORS[*fMethod + ".decompress"]
-    if compress == nil || decompress == nil {
-        panic("Unknown compression method")
-    }
-
     if *fCreate {
         if flag.NArg() == 0 {
             panic("No arguments specified")
@@ -81,6 +75,12 @@ func main() {
 
         archive := openForWrite(*fName)
         defer archive.Close()
+
+        compress := COMPRESSORS[*fMethod + ".compress"]
+        if compress == nil {
+            panic("Unknown compression method")
+        }
+        PanicIf(gob.NewEncoder(archive).Encode(*fMethod))
 
         PanicIf(gob.NewEncoder(archive).Encode(flag.Args()))
         for _, arg := range flag.Args() {
@@ -94,6 +94,13 @@ func main() {
 
         archive := openForRead(*fName)
         defer archive.Close()
+
+        var method string
+        PanicIf(gob.NewDecoder(archive).Decode(&method))
+        decompress := DECOMPRESSORS[method + ".decompress"]
+        if decompress == nil {
+            panic("Unknown compression method")
+        }
 
         var filenames []string = make([]string, 0)
         PanicIf(gob.NewDecoder(archive).Decode(&filenames))
