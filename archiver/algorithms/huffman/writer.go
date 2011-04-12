@@ -25,13 +25,9 @@ type (
 
 
 func countFreq(table *hfFreqTable, fobj *os.File) {
-    var (
-        curr byte = 0
-        error os.Error = nil
-    )
     reader := bufio.NewReader(fobj)
     for {
-        curr, error = reader.ReadByte()
+        curr, error := reader.ReadByte()
         if error != nil {
             break
         }
