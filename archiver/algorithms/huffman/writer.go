@@ -66,19 +66,22 @@ func Compress(fin, fout *os.File) {
     )
     countFreq(&freq_table, fin)
 
-    // create heap
+    // create heap and fill code table
     for ch, freq := range freq_table {
             tree.Push(&hfNode{char: ch, freq: freq})
     }
     heap.Init(&tree)
-    for len(tree) > 1 {
-        l := heap.Pop(&tree).(*hfNode)
-        r := heap.Pop(&tree).(*hfNode)
-        parent := &hfNode{freq: l.freq + r.freq, left: l, right: r}
-        heap.Push(&tree, parent)
+    if len(tree) == 1 {
+        code_table[tree[0].char] = hfCode{Len: 1, Code: 0}
+    } else if len(tree) > 1 {
+        for len(tree) > 1 {
+            l := heap.Pop(&tree).(*hfNode)
+            r := heap.Pop(&tree).(*hfNode)
+            parent := &hfNode{freq: l.freq + r.freq, left: l, right: r}
+            heap.Push(&tree, parent)
+        }
+        fillCodeTable(&code_table, tree[0], 0, 0)
     }
-
-    fillCodeTable(&code_table, tree[0], 0, 0)
 
     serializeMetaInfo(&code_table, fin, fout)
 
@@ -110,7 +113,7 @@ func Compress(fin, fout *os.File) {
         }
         i = 0
     }
-    if outbyte != 0 {
+    if outlen != 0 {
         writer.WriteByte(outbyte)
     }
 }
