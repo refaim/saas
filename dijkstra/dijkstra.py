@@ -67,18 +67,18 @@ def isleft(operator):
 def main(argv):
     expression = (' '.join(argv) if argv else raw_input()).strip()
 
-    operators, postfix = [], []
+    stack, postfix = [], []
     for token in tokens(expression):
         if isop(token):
-            while (operators and isop(operators[-1]) and
-                   (isleft(token) and priority(token) <= priority(operators[-1]) or
-                    not isleft(token) and priority(token) < priority(operators[-1]))
+            while (stack and isop(stack[-1]) and
+                   (isleft(token) and priority(token) <= priority(stack[-1]) or
+                    not isleft(token) and priority(token) < priority(stack[-1]))
             ):
-                postfix.append(operators.pop())
-            operators.append(token)
+                postfix.append(stack.pop())
+            stack.append(token)
         else:
             postfix.append(float(token))
-    postfix.extend(reversed(operators))
+    postfix.extend(reversed(stack))
 
     result = calculate(postfix)
     print result
