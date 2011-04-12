@@ -17,8 +17,13 @@ func GetFileSize(fobj *os.File) int64 {
 }
 
 
-func GetFilePos(fobj *os.File) int64 {
-    pos, error := fobj.Seek(0, 1)
+func SafeSeek(fobj *os.File, offset int64, whence int) int64 {
+    pos, error := fobj.Seek(offset, whence)
     PanicIf(error)
     return pos
+}
+
+
+func GetFilePos(fobj *os.File) int64 {
+    return SafeSeek(fobj, 0, 1)
 }

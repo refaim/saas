@@ -98,16 +98,14 @@ func main() {
         var filenames []string = make([]string, 0)
         PanicIf(gob.NewDecoder(archive).Decode(&filenames))
         for _, arg := range filenames {
-            file_begin_pos, error := archive.Seek(0, 1)
-            PanicIf(error)
+            file_begin_pos := GetFilePos(archive)
 
             result := openForWrite(fmt.Sprintf("%s/%s", dir, arg))
             bytes_read := decompress(archive, result)
             result.Close()
 
             // workaround for buffered reader
-            _, error = archive.Seek(file_begin_pos + bytes_read, 0)
-            PanicIf(error)
+            SafeSeek(archive, file_begin_pos + bytes_read, 0)
         }
     }
 }

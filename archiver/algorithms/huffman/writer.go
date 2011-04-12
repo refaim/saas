@@ -37,8 +37,7 @@ func countFreq(table *hfFreqTable, fobj *os.File) {
         }
         (*table)[curr]++
     }
-    _, error = fobj.Seek(0, 0)
-    PanicIf(error)
+    SafeSeek(fobj, 0, 0)
 }
 
 
