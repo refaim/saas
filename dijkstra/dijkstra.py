@@ -36,7 +36,7 @@ def tokens(string):
             while string[pos].isspace():
                 pos += 1
             raise DError('unknown char: %s' % string[pos])
-        
+
 
 def calculate(postfix):
     result = []
