@@ -117,13 +117,22 @@ class DijkstraTestCase(unittest.TestCase):
                 expression = []
 
                 for j in range(3):
+                    place_parens = roll()
+                    if place_parens:
+                        expression.append('(')
+
                     if roll():
                         expression.append(get_binary_expression())
                     else:
                         expression.append(get_unary_expression())
+
+                    if place_parens:
+                        expression.append(')')
+
                     if roll():
                         expression.insert(0, '(')
                         expression.append(')')
+
                     expression.append(operator())
 
                 expression.pop()
