@@ -108,7 +108,6 @@ class DijkstraTestCase(unittest.TestCase):
                 result = evaluate(expression)
                 if result is None: continue
                 break
-            log.debug(expression)
             self.assertRoughlyEqual(expression, result)
 
 
