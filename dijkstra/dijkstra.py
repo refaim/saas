@@ -20,6 +20,7 @@ OPERATOR_PRIORITIES = {
     '+':  (0, 'l'),
     '-':  (0, 'l'),
 }
+OPERATORS = [op for op in OPERATOR_PRIORITIES if op not in RESTORE_UNARY]
 
 CHAR2FUNC = {
     '**': lambda a, b: a ** b,
@@ -158,13 +159,15 @@ def main(argv):
         postfix.append(operator)
 
     result = calculate(map(lambda x: RESTORE_UNARY.get(x, x), postfix))
-    print int(result) if result.is_integer() else result
-    return 0
+    return int(result) if result.is_integer() else result
 
 
 if __name__ == '__main__':
     try:
-        sys.exit(main(sys.argv[1:]))
+        result = main(sys.argv[1:])
+        if result is not None:
+            print result
+        sys.exit(0)
     except KeyboardInterrupt:
         print 'Interrupted by user'
     except DijkstraError, ex:
