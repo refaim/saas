@@ -78,7 +78,7 @@ def calculate(postfix):
                 raise DijkstraError(ex.args[-1])
             except ZeroDivisionError, ex:
                 msg = ex.args[0]
-                if msg == 'float division':
+                if 'power' not in msg:
                     msg = 'division by zero'
                 raise DijkstraError(msg)
         else:
