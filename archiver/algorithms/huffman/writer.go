@@ -3,7 +3,7 @@ package huffman
 import (
     "bufio"
     "container/heap"
-    "gob"
+    "encoding/gob"
     "os"
 )
 
@@ -13,16 +13,15 @@ const BITS_IN_BYTE byte = 8
 
 type (
     hfNode struct {
-        char byte
-        freq uint64
+        char        byte
+        freq        uint64
         left, right *hfNode
     }
     hfHeap []*hfNode
 
-    hfFreqTable map[byte] uint64
-    hfCodeTable map[byte] hfCode
+    hfFreqTable map[byte]uint64
+    hfCodeTable map[byte]hfCode
 )
-
 
 func countFreq(table *hfFreqTable, fobj *os.File) {
     reader := bufio.NewReader(fobj)
@@ -36,39 +35,36 @@ func countFreq(table *hfFreqTable, fobj *os.File) {
     SafeSeek(fobj, 0, 0)
 }
 
-
 func fillCodeTable(table *hfCodeTable, node *hfNode, len, code uint) {
     if node.left == nil && node.right == nil {
         (*table)[node.char] = hfCode{Len: len, Code: code}
     } else {
-        fillCodeTable(table, node.left,  len + 1, code)
-        fillCodeTable(table, node.right, len + 1, code | 1 << len)
+        fillCodeTable(table, node.left, len+1, code)
+        fillCodeTable(table, node.right, len+1, code|1<<len)
     }
 }
 
-
 func serializeMetaInfo(code_table *hfCodeTable, fin, fout *os.File) {
     var dump hfDump
-    dump.Table = make([] hfCode, 256)
-    for k, v := range (*code_table) {
+    dump.Table = make([]hfCode, 256)
+    for k, v := range *code_table {
         dump.Table[k] = v
     }
     dump.FileSize = GetFileSize(fin)
     PanicIf(gob.NewEncoder(fout).Encode(dump))
 }
 
-
 func Compress(fin, fout *os.File) {
     var (
         freq_table hfFreqTable = make(hfFreqTable, 255)
         code_table hfCodeTable = make(hfCodeTable)
-        tree hfHeap
+        tree       hfHeap
     )
     countFreq(&freq_table, fin)
 
     // create heap and fill code table
     for ch, freq := range freq_table {
-            tree.Push(&hfNode{char: ch, freq: freq})
+        tree.Push(&hfNode{char: ch, freq: freq})
     }
     heap.Init(&tree)
     if len(tree) == 1 {
@@ -88,7 +84,7 @@ func Compress(fin, fout *os.File) {
     // encode
     var (
         outbyte, outlen byte = 0, 0
-        i uint = 0
+        i               uint = 0
     )
     reader := bufio.NewReader(fin)
     writer := bufio.NewWriter(fout)

@@ -2,18 +2,17 @@ package rle
 
 import (
     "bufio"
-    "gob"
+    "encoding/gob"
     "os"
 )
 
 import . "common"
 
-
 func Decompress(fin, fout *os.File) int64 {
     var (
-        curr, prev byte = 0, 0
-        found, invalid_prev bool = false, false
-        error os.Error = nil
+        curr, prev                         byte  = 0, 0
+        found, invalid_prev                bool  = false, false
+        error                              error = nil
         real_size, source_size, read_bytes int64 = 0, 0, 0
     )
 

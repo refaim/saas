@@ -1,64 +1,49 @@
 package main
 
 import (
+    "encoding/gob"
     "flag"
     "fmt"
-    "gob"
     "os"
 )
 
 import (
-    . "common"
-    "algorithms/rle"
     "algorithms/huffman"
+    "algorithms/rle"
+    . "common"
 )
 
 type (
-    cmap map[string] func(*os.File, *os.File)
-    dcmap map[string] func(*os.File, *os.File) int64
+    cmap  map[string]func(*os.File, *os.File)
+    dcmap map[string]func(*os.File, *os.File) int64
 )
 
 var (
-    fCreate = flag.Bool("c", false, "create archive")
+    fCreate  = flag.Bool("c", false, "create archive")
     fExtract = flag.Bool("x", false, "extract files from archive")
-    fMethod = flag.String("m", "rle", "compression method")
-    fName = flag.String("f", "", "archive file name")
+    fMethod  = flag.String("m", "rle", "compression method")
+    fName    = flag.String("f", "", "archive file name")
 
-    COMPRESSORS cmap = make(cmap)
+    COMPRESSORS   cmap  = make(cmap)
     DECOMPRESSORS dcmap = make(dcmap)
 )
 
-
-func openForRead(name string) *os.File {
-    file, error := os.Open(name, os.O_RDONLY, 0444)
-    PanicIf(error)
-    return file
-}
-
-
-func openForWrite(name string) *os.File {
-    file, error := os.Open(name, os.O_CREATE | os.O_WRONLY | os.O_TRUNC, 0666)
-    PanicIf(error)
-    return file
-}
-
-
 func init() {
-      COMPRESSORS["rle.compress"] = rle.Compress
+    COMPRESSORS["rle.compress"] = rle.Compress
     DECOMPRESSORS["rle.decompress"] = rle.Decompress
-      COMPRESSORS["huffman.compress"] = huffman.Compress
+    COMPRESSORS["huffman.compress"] = huffman.Compress
     DECOMPRESSORS["huffman.decompress"] = huffman.Decompress
 }
 
 func main() {
     defer func() {
-        if error := recover(); error != nil {
+        /*if error := recover(); error != nil {
             fmt.Printf("Error: %s", error)
-        }
+        }*/
     }()
 
     flag.Parse()
-    if !*fCreate && !*fExtract {
+    if !(*fCreate || *fExtract) {
         panic("Missing operation")
     }
     if *fCreate && *fExtract {
@@ -73,10 +58,11 @@ func main() {
             panic("No arguments specified")
         }
 
-        archive := openForWrite(*fName)
+        archive, error := os.Create(*fName)
+        PanicIf(error)
         defer archive.Close()
 
-        compress := COMPRESSORS[*fMethod + ".compress"]
+        compress := COMPRESSORS[*fMethod+".compress"]
         if compress == nil {
             panic("Unknown compression method")
         }
@@ -84,7 +70,8 @@ func main() {
 
         PanicIf(gob.NewEncoder(archive).Encode(flag.Args()))
         for _, arg := range flag.Args() {
-            fobj := openForRead(arg)
+            fobj, error := os.Open(arg)
+            PanicIf(error)
             compress(fobj, archive)
             fobj.Close()
         }
@@ -92,27 +79,30 @@ func main() {
         dir := *fName + ".ex"
         PanicIf(os.MkdirAll(dir, 0666))
 
-        archive := openForRead(*fName)
+        archive, error := os.Open(*fName)
+        PanicIf(error)
         defer archive.Close()
 
         var method string
         PanicIf(gob.NewDecoder(archive).Decode(&method))
-        decompress := DECOMPRESSORS[method + ".decompress"]
+        decompress := DECOMPRESSORS[method+".decompress"]
         if decompress == nil {
             panic("Unknown compression method")
         }
 
         var filenames []string = make([]string, 0)
         PanicIf(gob.NewDecoder(archive).Decode(&filenames))
+        gob.NewDecoder(archive).Decode(&filenames)
         for _, arg := range filenames {
             file_begin_pos := GetFilePos(archive)
 
-            result := openForWrite(fmt.Sprintf("%s/%s", dir, arg))
+            result, error := os.Create(fmt.Sprintf("%s/%s", dir, arg))
+            PanicIf(error)
             bytes_read := decompress(archive, result)
             result.Close()
 
             // workaround for buffered reader
-            SafeSeek(archive, file_begin_pos + bytes_read, 0)
+            SafeSeek(archive, file_begin_pos+bytes_read, 0)
         }
     }
 }

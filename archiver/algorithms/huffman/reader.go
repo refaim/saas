@@ -2,7 +2,8 @@ package huffman
 
 import (
     "bufio"
-    "gob"
+    "encoding/gob"
+    "io"
     "os"
 )
 
@@ -11,11 +12,10 @@ import . "common"
 type (
     hfReverseCode struct {
         char byte
-        len uint
+        len  uint
     }
-    hfReverseCodeTable map[uint] *hfReverseCode
+    hfReverseCodeTable map[uint]*hfReverseCode
 )
-
 
 func deserializeMetaInfo(rct *hfReverseCodeTable, fobj *os.File) (int64, int64) {
     var (
@@ -34,14 +34,13 @@ func deserializeMetaInfo(rct *hfReverseCodeTable, fobj *os.File) (int64, int64) 
     return dump.FileSize, read_bytes
 }
 
-
 func Decompress(fin, fout *os.File) int64 {
     var (
-        rct hfReverseCodeTable = make(hfReverseCodeTable)
-        outptr *hfReverseCode = nil
-        code, code_len uint = 0, 0
-        real_size, source_size, read_bytes int64 = 0, 0, 0
-        i byte = 0
+        rct                                hfReverseCodeTable = make(hfReverseCodeTable)
+        outptr                             *hfReverseCode     = nil
+        code, code_len                     uint               = 0, 0
+        real_size, source_size, read_bytes int64              = 0, 0, 0
+        i                                  byte               = 0
     )
     source_size, read_bytes = deserializeMetaInfo(&rct, fin)
 
@@ -52,7 +51,7 @@ func Decompress(fin, fout *os.File) int64 {
     for real_size < source_size {
         curr, error := reader.ReadByte()
         if error != nil {
-            if error == os.EOF {
+            if error == io.EOF {
                 panic("Archive corrupted")
             }
             panic(error)

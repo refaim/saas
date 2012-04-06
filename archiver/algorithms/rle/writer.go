@@ -2,18 +2,17 @@ package rle
 
 import (
     "bufio"
-    "gob"
+    "encoding/gob"
     "os"
 )
 
 import . "common"
 
-
 func Compress(fin, fout *os.File) {
     var (
-        curr, prev, count byte = 0, 0, 0
-        found bool = false
-        error os.Error = nil
+        curr, prev, count byte  = 0, 0, 0
+        found             bool  = false
+        error             error = nil
     )
 
     PanicIf(gob.NewEncoder(fout).Encode(GetFileSize(fin)))

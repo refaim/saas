@@ -5,7 +5,7 @@ type (
         Code, Len uint
     }
     hfDump struct {
-        Table [] hfCode
+        Table    []hfCode
         FileSize int64
     }
 )
