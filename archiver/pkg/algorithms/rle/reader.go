@@ -6,7 +6,7 @@ import (
     "os"
 )
 
-import . "common"
+import . "github.com/refaim/saas/archiver/pkg/common"
 
 func Decompress(fin, fout *os.File) int64 {
     var (

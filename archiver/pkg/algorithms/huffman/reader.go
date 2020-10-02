@@ -7,7 +7,7 @@ import (
     "os"
 )
 
-import . "common"
+import . "github.com/refaim/saas/archiver/pkg/common"
 
 type (
     hfReverseCode struct {

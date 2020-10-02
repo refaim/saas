@@ -8,9 +8,9 @@ import (
 )
 
 import (
-    "algorithms/huffman"
-    "algorithms/rle"
-    . "common"
+    "github.com/refaim/saas/archiver/pkg/algorithms/huffman"
+    "github.com/refaim/saas/archiver/pkg/algorithms/rle"
+    . "github.com/refaim/saas/archiver/pkg/common"
 )
 
 type (

@@ -7,7 +7,7 @@ import (
     "os"
 )
 
-import . "common"
+import . "github.com/refaim/saas/archiver/pkg/common"
 
 const BITS_IN_BYTE byte = 8
 
